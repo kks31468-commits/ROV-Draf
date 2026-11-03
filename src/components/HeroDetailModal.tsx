@@ -44,8 +44,7 @@ export const HeroDetailModal: React.FC<HeroDetailModalProps> = ({
             <HeroAvatar hero={hero} size="lg" />
             <div>
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className="text-2xl font-bold font-heading text-white">{hero.nameTh}</span>
-                <span className="text-slate-400 font-heading text-lg">({hero.name})</span>
+                <span className="text-2xl font-bold font-heading text-white">{hero.name}</span>
                 <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   Tier {hero.tier}
                 </span>
@@ -176,7 +175,7 @@ export const HeroDetailModal: React.FC<HeroDetailModalProps> = ({
                       className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-emerald-950/40 border border-emerald-800/40 hover:border-emerald-500 transition-colors text-xs text-emerald-200 cursor-pointer"
                     >
                       <HeroAvatar hero={target} size="sm" showTier={false} className="w-6 h-6 rounded-md" />
-                      <span>{target.nameTh}</span>
+                      <span>{target.name}</span>
                     </button>
                   );
                 })}
@@ -199,7 +198,7 @@ export const HeroDetailModal: React.FC<HeroDetailModalProps> = ({
                       className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-rose-950/40 border border-rose-800/40 hover:border-rose-500 transition-colors text-xs text-rose-200 cursor-pointer"
                     >
                       <HeroAvatar hero={target} size="sm" showTier={false} className="w-6 h-6 rounded-md" />
-                      <span>{target.nameTh}</span>
+                      <span>{target.name}</span>
                     </button>
                   );
                 })}
@@ -222,7 +221,7 @@ export const HeroDetailModal: React.FC<HeroDetailModalProps> = ({
                       className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-sky-950/40 border border-sky-800/40 hover:border-sky-500 transition-colors text-xs text-sky-200 cursor-pointer"
                     >
                       <HeroAvatar hero={target} size="sm" showTier={false} className="w-6 h-6 rounded-md" />
-                      <span>{target.nameTh}</span>
+                      <span>{target.name}</span>
                     </button>
                   );
                 })}

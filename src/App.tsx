@@ -22,6 +22,9 @@ import {
   Layers,
   HelpCircle,
   ExternalLink,
+  Globe,
+  Check,
+  Link,
 } from 'lucide-react';
 
 type NavTab = 'draft' | 'counters' | 'tierlist' | 'builder';
@@ -29,23 +32,23 @@ type NavTab = 'draft' | 'counters' | 'tierlist' | 'builder';
 export default function App() {
   const [navTab, setNavTab] = useState<NavTab>('draft');
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [copiedLink, setCopiedLink] = useState(false);
 
-  // Draft State (RoV currently uses 5 bans per team = 10 bans total)
-  const [draftMode, setDraftMode] = useState<'ranked' | 'tournament' | 'free'>('ranked');
+  // Draft State (Single Standard Mode: 5 bans per team = 10 bans total)
   const [blueBans, setBlueBans] = useState<(Hero | null)[]>([null, null, null, null, null]);
   const [redBans, setRedBans] = useState<(Hero | null)[]>([null, null, null, null, null]);
   const [bluePicks, setBluePicks] = useState<Record<Lane, Hero | null>>({
+    adl: null,
+    mid: null,
     dsl: null,
     jg: null,
-    mid: null,
-    adl: null,
     sp: null,
   });
   const [redPicks, setRedPicks] = useState<Record<Lane, Hero | null>>({
+    adl: null,
+    mid: null,
     dsl: null,
     jg: null,
-    mid: null,
-    adl: null,
     sp: null,
   });
 
@@ -53,7 +56,7 @@ export default function App() {
   const [activeAction, setActiveAction] = useState<'ban' | 'pick'>('ban');
   const [targetSlot, setTargetSlot] = useState<{ team: 'blue' | 'red'; lane: Lane } | null>({
     team: 'blue',
-    lane: 'dsl',
+    lane: 'adl',
   });
   const [targetBanIndex, setTargetBanIndex] = useState<{ team: 'blue' | 'red'; index: number } | null>(null);
 
@@ -67,32 +70,43 @@ export default function App() {
     soundManager.setSoundEnabled(next);
   };
 
-  // Switch Draft Mode (Both Ranked & Tournament in current patch use 5 bans each)
-  const handleModeChange = (mode: 'ranked' | 'tournament' | 'free') => {
-    setDraftMode(mode);
-    soundManager.playClick();
-    setBlueBans(new Array(5).fill(null));
-    setRedBans(new Array(5).fill(null));
-    setTargetBanIndex(null);
-    if (mode === 'free') {
-      setActiveAction('pick');
-    } else {
-      setActiveAction('ban');
-      setActiveTeam('blue');
-    }
-  };
-
   // Reset Draft
   const handleResetDraft = () => {
     soundManager.playClick();
     setBlueBans(new Array(5).fill(null));
     setRedBans(new Array(5).fill(null));
-    setBluePicks({ dsl: null, jg: null, mid: null, adl: null, sp: null });
-    setRedPicks({ dsl: null, jg: null, mid: null, adl: null, sp: null });
+    setBluePicks({ adl: null, mid: null, dsl: null, jg: null, sp: null });
+    setRedPicks({ adl: null, mid: null, dsl: null, jg: null, sp: null });
     setActiveTeam('blue');
-    setActiveAction(draftMode === 'free' ? 'pick' : 'ban');
-    setTargetSlot({ team: 'blue', lane: 'dsl' });
+    setActiveAction('ban');
+    setTargetSlot({ team: 'blue', lane: 'adl' });
     setTargetBanIndex(null);
+  };
+
+  // Share application URL or copy to clipboard
+  const handleShareApp = async () => {
+    soundManager.playClick();
+    const shareUrl = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'RoV Meta Drafter - เว็บช่วยดราฟท์ฮีโร่ RoV ทุกตำแหน่ง',
+          text: 'เว็บช่วยดราฟท์ฮีโร่ RoV อ้างอิงข้อมูล rovmeta.com ครบ 131 ฮีโร่ 5 แบน แนะนำตัวแก้ทางและจัดทีมแบบเรียลไทม์',
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // User cancelled or share failed, fallback to clipboard
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    } catch {
+      // Fallback if clipboard API blocked
+      prompt('คัดลอกลิงก์เว็บไซต์นี้:', shareUrl);
+    }
   };
 
   // Handle clicking a specific ban slot (1-5)
@@ -178,7 +192,7 @@ export default function App() {
     currentTeam: 'blue' | 'red',
     currentLane: Lane
   ): { team: 'blue' | 'red'; lane: Lane } | null => {
-    const lanes: Lane[] = ['dsl', 'jg', 'mid', 'adl', 'sp'];
+    const lanes: Lane[] = ['adl', 'mid', 'dsl', 'jg', 'sp'];
     const otherTeam = currentTeam === 'blue' ? 'red' : 'blue';
 
     // Check same team other lanes
@@ -243,10 +257,10 @@ export default function App() {
           const redBanCount = nextBans.filter((b) => b !== null).length;
           const allFilled = blueBanCount >= 5 && redBanCount >= 5;
 
-          if (allFilled || draftMode === 'free') {
+          if (allFilled) {
             setActiveAction('pick');
             setActiveTeam('blue');
-            setTargetSlot({ team: 'blue', lane: 'dsl' });
+            setTargetSlot({ team: 'blue', lane: 'adl' });
           } else {
             setActiveTeam('blue');
           }
@@ -288,7 +302,7 @@ export default function App() {
     bluePicks,
     redPicks,
     currentStepIndex: 0,
-    draftMode,
+    draftMode: 'ranked',
     activeTeam,
     activeAction,
     selectedHeroForDetail: inspectedHero,
@@ -382,6 +396,34 @@ export default function App() {
 
           {/* Quick Actions & Toggles */}
           <div className="flex items-center gap-2">
+            {/* Online Status & Share Website Button */}
+            <button
+              onClick={handleShareApp}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                copiedLink
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 shadow-lg shadow-emerald-500/20'
+                  : 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30 hover:bg-emerald-900/50 hover:border-emerald-500/60'
+              }`}
+              title="คัดลอกลิงก์เว็บไซต์เพื่อเปิดบนมือถือหรือแชร์ให้เพื่อน"
+            >
+              {copiedLink ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>คัดลอกลิงก์แล้ว!</span>
+                </>
+              ) : (
+                <>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">ออนไลน์</span>
+                  <span>แชร์เว็บ</span>
+                </>
+              )}
+            </button>
+
             <button
               onClick={toggleSound}
               className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
@@ -416,43 +458,14 @@ export default function App() {
           <div className="flex flex-col h-[calc(100vh-76px)] min-h-[580px] gap-2.5">
             {/* Draft Controls Bar */}
             <div className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-900/95 border border-slate-800 shadow-md">
-              {/* Draft Mode Selector */}
-              <div className="flex items-center gap-2 text-xs flex-wrap">
-                <span className="text-slate-400 font-semibold">โหมดดราฟท์:</span>
-                <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                  <button
-                    onClick={() => handleModeChange('ranked')}
-                    className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                      draftMode === 'ranked'
-                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    จัดอันดับ (5 แบน)
-                  </button>
-                  <button
-                    onClick={() => handleModeChange('tournament')}
-                    className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                      draftMode === 'tournament'
-                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    โปรลีก / ทัวร์นาเมนต์ (5 แบน)
-                  </button>
-                  <button
-                    onClick={() => handleModeChange('free')}
-                    className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                      draftMode === 'free'
-                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    เลือกอิสระ (5 แบน)
-                  </button>
-                </div>
-                <span className="text-[11px] text-amber-400/90 font-medium hidden lg:inline bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-                  ✦ ปัจจุบัน RoV เซิร์ฟไทยแบนฝั่งละ 5 ตัว (รวม 10 แบนในแมตช์)
+              {/* Single Draft Mode Title */}
+              <div className="flex items-center gap-2.5 text-xs">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                <span className="font-heading font-extrabold text-sm text-white tracking-wide">
+                  ห้องดราฟท์ RoV (5 แบน / 5 พิค)
+                </span>
+                <span className="text-[11px] text-amber-300/80 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 hidden sm:inline">
+                  131 ฮีโร่ครบ
                 </span>
               </div>
 

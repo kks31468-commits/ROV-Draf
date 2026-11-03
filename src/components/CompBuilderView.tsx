@@ -82,7 +82,7 @@ export const CompBuilderView: React.FC<CompBuilderViewProps> = ({
 
   const squadPicks = Object.values(currentSquad);
   const analysis: TeamAnalysis = analyzeTeamComp(squadPicks);
-  const lanes: Lane[] = ['dsl', 'jg', 'mid', 'adl', 'sp'];
+  const lanes: Lane[] = ['adl', 'mid', 'dsl', 'jg', 'sp'];
 
   return (
     <div className="space-y-6">
@@ -206,7 +206,7 @@ export const CompBuilderView: React.FC<CompBuilderViewProps> = ({
                           if (!h) return null;
                           return (
                             <span key={lane} className="text-[10px] text-slate-400">
-                              {h.nameTh.split(' ')[0]}
+                              {h.name}
                             </span>
                           );
                         })}
@@ -255,14 +255,14 @@ export const CompBuilderView: React.FC<CompBuilderViewProps> = ({
                     }`}
                   >
                     <div className="text-xs font-bold text-amber-400 mb-1 flex items-center gap-1">
-                      <span>{cfg.icon}</span> {cfg.short}
+                      <span>{cfg.icon}</span> {cfg.labelTh}
                     </div>
 
                     {hero ? (
                       <div>
                         <HeroAvatar hero={hero} size="md" />
                         <div className="font-heading font-bold text-xs text-slate-100 mt-1.5 truncate w-20">
-                          {hero.nameTh}
+                          {hero.name}
                         </div>
                         <div className="text-[10px] text-slate-400">
                           Tier {hero.tier}
@@ -306,7 +306,7 @@ export const CompBuilderView: React.FC<CompBuilderViewProps> = ({
                     >
                       <HeroAvatar hero={h} size="sm" showTier={false} />
                       <span className="text-[10px] font-bold mt-1 truncate w-14 text-slate-200">
-                        {h.nameTh}
+                        {h.name}
                       </span>
                     </div>
                   ))}

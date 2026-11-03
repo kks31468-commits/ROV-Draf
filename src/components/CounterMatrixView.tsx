@@ -65,9 +65,9 @@ export const CounterMatrixView: React.FC<CounterMatrixViewProps> = ({
                   selectedLane === 'all' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-400'
                 }`}
               >
-                ทั้งหมด ({ALL_HEROES.length})
+                ทั้งหมด
               </button>
-              {(['dsl', 'jg', 'mid', 'adl', 'sp'] as Lane[]).map((lane) => (
+              {(['adl', 'mid', 'dsl', 'jg', 'sp'] as Lane[]).map((lane) => (
                 <button
                   key={lane}
                   onClick={() => setSelectedLane(lane)}
@@ -77,7 +77,7 @@ export const CounterMatrixView: React.FC<CounterMatrixViewProps> = ({
                       : 'bg-slate-800 text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  {LANE_CONFIG[lane].short}
+                  {LANE_CONFIG[lane].labelTh}
                 </button>
               ))}
             </div>
@@ -102,17 +102,17 @@ export const CounterMatrixView: React.FC<CounterMatrixViewProps> = ({
                 >
                   <HeroAvatar hero={hero} size="sm" />
                   <div className="min-w-0 flex-1">
-                    <div className="font-heading font-bold text-xs text-slate-100 truncate">
-                      {hero.nameTh}
+                    <div className="font-heading font-bold text-sm text-slate-100 truncate">
+                      {hero.name}
                     </div>
                     <div className="text-[10px] text-slate-400 truncate flex items-center gap-1">
-                      <span>{hero.name}</span>
+                      <span>{hero.role}</span>
                       <span>•</span>
                       <span>Tier {hero.tier}</span>
                     </div>
                   </div>
                   <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
-                    {LANE_CONFIG[hero.primaryLane].short}
+                    {LANE_CONFIG[hero.primaryLane].labelTh}
                   </span>
                 </div>
               );
@@ -129,10 +129,7 @@ export const CounterMatrixView: React.FC<CounterMatrixViewProps> = ({
               <div>
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className="font-heading font-extrabold text-2xl text-white">
-                    {selectedHero.nameTh}
-                  </span>
-                  <span className="text-slate-400 text-lg font-heading">
-                    ({selectedHero.name})
+                    {selectedHero.name}
                   </span>
                   <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     Tier {selectedHero.tier}
@@ -160,7 +157,7 @@ export const CounterMatrixView: React.FC<CounterMatrixViewProps> = ({
           <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800">
             <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
               <Lightbulb className="w-4 h-4" />
-              กลยุทธ์และวิธีเอาชนะ {selectedHero.nameTh} ในแมตช์
+              กลยุทธ์และวิธีเอาชนะ {selectedHero.name} ในแมตช์
             </div>
             <p className="text-sm text-slate-200 leading-relaxed font-sans">
               {selectedHero.draftTipsTh}
@@ -172,7 +169,7 @@ export const CounterMatrixView: React.FC<CounterMatrixViewProps> = ({
             <div className="flex items-center justify-between">
               <h3 className="font-heading font-bold text-base text-rose-400 flex items-center gap-2">
                 <Swords className="w-5 h-5 text-rose-400" />
-                ฮีโร่ที่แก้ทาง {selectedHero.nameTh} ได้ดีที่สุด (Hard Counters)
+                ฮีโร่ที่แก้ทาง {selectedHero.name} ได้ดีที่สุด (Hard Counters)
               </h3>
               <span className="text-xs text-slate-400">คลิกเพื่อดูรายละเอียด</span>
             </div>
@@ -192,11 +189,11 @@ export const CounterMatrixView: React.FC<CounterMatrixViewProps> = ({
                   >
                     <HeroAvatar hero={counterHero} size="md" />
                     <div className="min-w-0">
-                      <div className="font-heading font-bold text-xs text-rose-200 group-hover:text-white truncate">
-                        {counterHero.nameTh}
+                      <div className="font-heading font-bold text-sm text-rose-200 group-hover:text-white truncate">
+                        {counterHero.name}
                       </div>
                       <div className="text-[10px] text-slate-400 truncate">
-                        {counterHero.name}
+                        {counterHero.role} • {LANE_CONFIG[counterHero.primaryLane].labelTh}
                       </div>
                       <div className="text-[10px] text-rose-400/90 font-medium mt-0.5">
                         ชนะทางชัดเจน ✓
@@ -212,7 +209,7 @@ export const CounterMatrixView: React.FC<CounterMatrixViewProps> = ({
           <div className="p-5 rounded-2xl bg-slate-900/80 border border-emerald-900/40 shadow-xl space-y-3">
             <h3 className="font-heading font-bold text-base text-emerald-400 flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-emerald-400" />
-              ฮีโร่ที่ {selectedHero.nameTh} กดดันชนะทาง (Victims - อย่าหยิบมาชน)
+              ฮีโร่ที่ {selectedHero.name} กดดันชนะทาง (Victims - อย่าหยิบมาชน)
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -230,14 +227,14 @@ export const CounterMatrixView: React.FC<CounterMatrixViewProps> = ({
                   >
                     <HeroAvatar hero={victimHero} size="md" />
                     <div className="min-w-0">
-                      <div className="font-heading font-bold text-xs text-emerald-200 group-hover:text-white truncate">
-                        {victimHero.nameTh}
-                      </div>
-                      <div className="text-[10px] text-slate-400 truncate">
+                      <div className="font-heading font-bold text-sm text-emerald-200 group-hover:text-white truncate">
                         {victimHero.name}
                       </div>
+                      <div className="text-[10px] text-slate-400 truncate">
+                        {victimHero.role} • {LANE_CONFIG[victimHero.primaryLane].labelTh}
+                      </div>
                       <div className="text-[10px] text-slate-400 mt-0.5">
-                        แพ้ทาง {selectedHero.nameTh}
+                        แพ้ทาง {selectedHero.name}
                       </div>
                     </div>
                   </div>
@@ -268,13 +265,13 @@ export const CounterMatrixView: React.FC<CounterMatrixViewProps> = ({
                   >
                     <HeroAvatar hero={allyHero} size="md" />
                     <div className="min-w-0">
-                      <div className="font-heading font-bold text-xs text-sky-200 group-hover:text-white truncate">
-                        {allyHero.nameTh}
-                      </div>
-                      <div className="text-[10px] text-slate-400 truncate">
+                      <div className="font-heading font-bold text-sm text-sky-200 group-hover:text-white truncate">
                         {allyHero.name}
                       </div>
-                      <div className="text-[10px] text-sky-400 mt-0.5">
+                      <div className="text-[10px] text-slate-400 truncate">
+                        {allyHero.role} • {LANE_CONFIG[allyHero.primaryLane].labelTh}
+                      </div>
+                      <div className="text-[10px] text-sky-300 font-medium mt-0.5">
                         คอมโบพลังสูง ⚡
                       </div>
                     </div>

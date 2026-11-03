@@ -111,9 +111,9 @@ export const MetaTierListView: React.FC<MetaTierListViewProps> = ({
                 : 'bg-slate-800 text-slate-400 hover:text-slate-200'
             }`}
           >
-            ทุกตำแหน่ง ({ALL_HEROES.length} ฮีโร่)
+            ทุกตำแหน่ง
           </button>
-          {(['dsl', 'jg', 'mid', 'adl', 'sp'] as Lane[]).map((lane) => {
+          {(['adl', 'mid', 'dsl', 'jg', 'sp'] as Lane[]).map((lane) => {
             const cfg = LANE_CONFIG[lane];
             return (
               <button
@@ -126,7 +126,7 @@ export const MetaTierListView: React.FC<MetaTierListViewProps> = ({
                 }`}
               >
                 <span>{cfg.icon}</span>
-                <span>{cfg.short}</span>
+                <span>{cfg.labelTh}</span>
               </button>
             );
           })}
@@ -197,10 +197,7 @@ export const MetaTierListView: React.FC<MetaTierListViewProps> = ({
                       <HeroAvatar hero={hero} size="md" />
 
                       <div className="mt-2 w-full">
-                        <div className="font-heading font-bold text-xs text-slate-100 group-hover:text-amber-400 transition-colors truncate">
-                          {hero.nameTh}
-                        </div>
-                        <div className="text-[10px] text-slate-400 truncate">
+                        <div className="font-heading font-bold text-sm text-slate-100 group-hover:text-amber-400 transition-colors truncate">
                           {hero.name}
                         </div>
                       </div>

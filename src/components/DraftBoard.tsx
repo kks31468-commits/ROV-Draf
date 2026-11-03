@@ -26,7 +26,7 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
   targetSlot,
   targetBanIndex,
 }) => {
-  const lanes: Lane[] = ['dsl', 'jg', 'mid', 'adl', 'sp'];
+  const lanes: Lane[] = ['adl', 'mid', 'dsl', 'jg', 'sp'];
 
   const renderSlot = (team: 'blue' | 'red', lane: Lane) => {
     const picks = team === 'blue' ? draftState.bluePicks : draftState.redPicks;
@@ -94,7 +94,7 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
           {hero ? (
             <div>
               <div className="font-heading font-bold text-sm text-slate-100 truncate flex items-center gap-1.5">
-                <span>{hero.nameTh}</span>
+                <span>{hero.name}</span>
                 <span className="text-[10px] px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-normal">
                   {hero.tier}
                 </span>
@@ -180,7 +180,7 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                         ? 'border-slate-700 bg-slate-950'
                         : 'border-slate-800 bg-slate-950/80 hover:border-slate-700'
                     }`}
-                    title={banned ? `แบน: ${banned.nameTh} (คลิกเพื่อดูหรือลบ)` : `ช่องแบนที่ ${idx + 1}`}
+                    title={banned ? `แบน: ${banned.name} (คลิกเพื่อดูหรือลบ)` : `ช่องแบนที่ ${idx + 1}`}
                   >
                     {banned ? (
                       <>
@@ -253,7 +253,7 @@ export const DraftBoard: React.FC<DraftBoardProps> = ({
                         ? 'border-slate-700 bg-slate-950'
                         : 'border-slate-800 bg-slate-950/80 hover:border-slate-700'
                     }`}
-                    title={banned ? `แบน: ${banned.nameTh} (คลิกเพื่อดูหรือลบ)` : `ช่องแบนที่ ${idx + 1}`}
+                    title={banned ? `แบน: ${banned.name} (คลิกเพื่อดูหรือลบ)` : `ช่องแบนที่ ${idx + 1}`}
                   >
                     {banned ? (
                       <>

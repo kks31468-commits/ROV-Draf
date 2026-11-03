@@ -3,7 +3,7 @@ import { DraftState, Lane } from '../types/rov';
 import { LANE_CONFIG } from '../data/allHeroes';
 import { HeroAvatar } from './HeroAvatar';
 import { analyzeTeamComp } from '../utils/draftEngine';
-import { X, Copy, Check, Share2, Trophy } from 'lucide-react';
+import { X, Copy, Check, Share2, Trophy, Globe, Link as LinkIcon } from 'lucide-react';
 import { soundManager } from '../utils/audio';
 
 interface DraftSummaryModalProps {
@@ -16,11 +16,12 @@ export const DraftSummaryModal: React.FC<DraftSummaryModalProps> = ({
   onClose,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
 
   const blueAnalysis = analyzeTeamComp(Object.values(draftState.bluePicks));
   const redAnalysis = analyzeTeamComp(Object.values(draftState.redPicks));
 
-  const lanes: Lane[] = ['dsl', 'jg', 'mid', 'adl', 'sp'];
+  const lanes: Lane[] = ['adl', 'mid', 'dsl', 'jg', 'sp'];
 
   const generateShareText = () => {
     let text = `🎮 ผลการดราฟท์ฮีโร่ RoV (RoV Meta Drafter)\n\n`;
@@ -28,25 +29,27 @@ export const DraftSummaryModal: React.FC<DraftSummaryModalProps> = ({
     text += `🔵 ทีมสีฟ้า (Blue Team) [คะแนนความพร้อม: ${blueAnalysis.overallScore}/100]\n`;
     lanes.forEach((l) => {
       const h = draftState.bluePicks[l];
-      text += `  • ${LANE_CONFIG[l].short}: ${h ? `${h.nameTh} (${h.name}) [Tier ${h.tier}]` : '-'}\n`;
+      text += `  • ${LANE_CONFIG[l].labelTh}: ${h ? `${h.name} [Tier ${h.tier}]` : '-'}\n`;
     });
     if (draftState.blueBans.some(Boolean)) {
-      text += `  🚫 แบน: ${draftState.blueBans.filter(Boolean).map((b) => b!.nameTh).join(', ')}\n`;
+      text += `  🚫 แบน: ${draftState.blueBans.filter(Boolean).map((b) => b!.name).join(', ')}\n`;
     }
 
     text += `\n🔴 ทีมสีแดง (Red Team) [คะแนนความพร้อม: ${redAnalysis.overallScore}/100]\n`;
     lanes.forEach((l) => {
       const h = draftState.redPicks[l];
-      text += `  • ${LANE_CONFIG[l].short}: ${h ? `${h.nameTh} (${h.name}) [Tier ${h.tier}]` : '-'}\n`;
+      text += `  • ${LANE_CONFIG[l].labelTh}: ${h ? `${h.name} [Tier ${h.tier}]` : '-'}\n`;
     });
     if (draftState.redBans.some(Boolean)) {
-      text += `  🚫 แบน: ${draftState.redBans.filter(Boolean).map((b) => b!.nameTh).join(', ')}\n`;
+      text += `  🚫 แบน: ${draftState.redBans.filter(Boolean).map((b) => b!.name).join(', ')}\n`;
     }
 
     text += `\n📊 รูปแบบทีม:\n`;
     text += `• ฝั่งฟ้า: ${blueAnalysis.compArchetype}\n`;
     text += `• ฝั่งแดง: ${redAnalysis.compArchetype}\n`;
-    text += `\n🔗 ดราฟท์ด้วย RoV Meta Drafter (อ้างอิงข้อมูล rovmeta.com)`;
+    const appUrl = typeof window !== 'undefined' ? window.location.href : 'https://rovmeta.com';
+    text += `\n🌐 ลิงก์ห้องดราฟท์ออนไลน์: ${appUrl}\n`;
+    text += `🔗 อ้างอิงข้อมูลเมต้าจาก rovmeta.com (131 ฮีโร่ | 5 แบน)`;
 
     return text;
   };
@@ -56,6 +59,14 @@ export const DraftSummaryModal: React.FC<DraftSummaryModalProps> = ({
     navigator.clipboard.writeText(generateShareText());
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleCopyUrl = () => {
+    soundManager.playClick();
+    const appUrl = typeof window !== 'undefined' ? window.location.href : '';
+    navigator.clipboard.writeText(appUrl);
+    setCopiedUrl(true);
+    setTimeout(() => setCopiedUrl(false), 2500);
   };
 
   return (
@@ -102,7 +113,7 @@ export const DraftSummaryModal: React.FC<DraftSummaryModalProps> = ({
                     {h ? (
                       <div className="flex items-center gap-1.5 truncate">
                         <HeroAvatar hero={h} size="sm" showTier={false} className="w-6 h-6 rounded" />
-                        <span className="font-medium text-slate-200 truncate">{h.nameTh}</span>
+                        <span className="font-medium text-slate-200 truncate">{h.name}</span>
                       </div>
                     ) : (
                       <span className="text-slate-500">-</span>
@@ -121,7 +132,7 @@ export const DraftSummaryModal: React.FC<DraftSummaryModalProps> = ({
                     <div
                       key={idx}
                       className="w-6 h-6 rounded bg-slate-900 border border-slate-700 overflow-hidden flex items-center justify-center text-[9px] text-slate-500"
-                      title={b ? b.nameTh : 'ว่าง'}
+                      title={b ? b.name : 'ว่าง'}
                     >
                       {b ? (
                         <HeroAvatar hero={b} size="sm" isBanned={true} showTier={false} className="w-full h-full rounded-none" />
@@ -159,7 +170,7 @@ export const DraftSummaryModal: React.FC<DraftSummaryModalProps> = ({
                     {h ? (
                       <div className="flex items-center gap-1.5 truncate">
                         <HeroAvatar hero={h} size="sm" showTier={false} className="w-6 h-6 rounded" />
-                        <span className="font-medium text-slate-200 truncate">{h.nameTh}</span>
+                        <span className="font-medium text-slate-200 truncate">{h.name}</span>
                       </div>
                     ) : (
                       <span className="text-slate-500">-</span>
@@ -178,7 +189,7 @@ export const DraftSummaryModal: React.FC<DraftSummaryModalProps> = ({
                     <div
                       key={idx}
                       className="w-6 h-6 rounded bg-slate-900 border border-slate-700 overflow-hidden flex items-center justify-center text-[9px] text-slate-500"
-                      title={b ? b.nameTh : 'ว่าง'}
+                      title={b ? b.name : 'ว่าง'}
                     >
                       {b ? (
                         <HeroAvatar hero={b} size="sm" isBanned={true} showTier={false} className="w-full h-full rounded-none" />
@@ -211,21 +222,35 @@ export const DraftSummaryModal: React.FC<DraftSummaryModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-end gap-3">
+        <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between flex-wrap gap-2">
           <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 cursor-pointer"
+            onClick={handleCopyUrl}
+            className={`px-3 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              copiedUrl
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                : 'bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
+            }`}
           >
-            ปิด
+            {copiedUrl ? <Check className="w-4 h-4 text-emerald-400" /> : <Globe className="w-4 h-4 text-emerald-400" />}
+            <span>{copiedUrl ? 'คัดลอกลิงก์เว็บแล้ว!' : 'คัดลอกลิงก์เว็บ (Online Link)'}</span>
           </button>
 
-          <button
-            onClick={handleCopy}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/20 active:scale-95"
-          >
-            {copied ? <Check className="w-4 h-4 text-emerald-950" /> : <Copy className="w-4 h-4" />}
-            <span>{copied ? 'คัดลอกแล้ว!' : 'คัดลอกข้อความสรุป'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 cursor-pointer"
+            >
+              ปิด
+            </button>
+
+            <button
+              onClick={handleCopy}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/20 active:scale-95"
+            >
+              {copied ? <Check className="w-4 h-4 text-emerald-950" /> : <Copy className="w-4 h-4" />}
+              <span>{copied ? 'คัดลอกแล้ว!' : 'คัดลอกข้อความสรุป'}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

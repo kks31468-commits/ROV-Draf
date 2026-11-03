@@ -43,7 +43,7 @@ export const DraftAssistant: React.FC<DraftAssistantProps> = ({
   const [selectedMatchupLane, setSelectedMatchupLane] = useState<Lane>(targetLane || 'dsl');
 
   const currentAnalysis = activeTeam === 'blue' ? blueAnalysis : redAnalysis;
-  const lanes: Lane[] = ['dsl', 'jg', 'mid', 'adl', 'sp'];
+  const lanes: Lane[] = ['adl', 'mid', 'dsl', 'jg', 'sp'];
 
   const matchupData = compareLaneMatchup(
     bluePicks[selectedMatchupLane],
@@ -61,10 +61,10 @@ export const DraftAssistant: React.FC<DraftAssistantProps> = ({
           </div>
           <div>
             <h3 className="font-heading font-bold text-sm text-slate-100">
-              ผู้ช่วยวิเคราะห์ดราฟท์อัจฉริยะ (RoV AI Drafter)
+              วิเคราะห์ดราฟท์ & แนะนำตัวแก้ทาง
             </h3>
             <p className="text-[11px] text-slate-400">
-              วิเคราะห์เคาน์เตอร์พิค & คอมโบสำหรับ{' '}
+              วิเคราะห์สำหรับ{' '}
               <strong className={activeTeam === 'blue' ? 'text-blue-400' : 'text-red-400'}>
                 {activeTeam === 'blue' ? 'ทีมฟ้า' : 'ทีมแดง'}
               </strong>
@@ -83,7 +83,7 @@ export const DraftAssistant: React.FC<DraftAssistantProps> = ({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            🔥 แนะนำฮีโร่
+            🔥 แนะนำ
           </button>
           <button
             onClick={() => setActiveTab('analysis')}
@@ -93,7 +93,7 @@ export const DraftAssistant: React.FC<DraftAssistantProps> = ({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            📊 วิเคราะห์ทีม ({currentAnalysis.overallScore}%)
+            📊 ภาพรวม ({currentAnalysis.overallScore}%)
           </button>
           <button
             onClick={() => setActiveTab('matchups')}
@@ -103,7 +103,7 @@ export const DraftAssistant: React.FC<DraftAssistantProps> = ({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            ⚔️ จับคู่เลน
+            ⚔️ ดวลเลน
           </button>
         </div>
       </div>
@@ -154,9 +154,8 @@ export const DraftAssistant: React.FC<DraftAssistantProps> = ({
                       <div>
                         <div className="flex items-center gap-1.5">
                           <span className="font-heading font-bold text-sm text-slate-100">
-                            {hero.nameTh}
+                            {hero.name}
                           </span>
-                          <span className="text-xs text-slate-400">({hero.name})</span>
                           <span className="text-[10px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
                             {hero.tier}
                           </span>
@@ -414,7 +413,7 @@ export const DraftAssistant: React.FC<DraftAssistantProps> = ({
                   >
                     <HeroAvatar hero={bluePicks[selectedMatchupLane]!} size="md" />
                     <div className="text-xs font-bold mt-1.5 text-center text-slate-200">
-                      {bluePicks[selectedMatchupLane]!.nameTh}
+                      {bluePicks[selectedMatchupLane]!.name}
                     </div>
                   </div>
                 ) : (
@@ -452,7 +451,7 @@ export const DraftAssistant: React.FC<DraftAssistantProps> = ({
                   >
                     <HeroAvatar hero={redPicks[selectedMatchupLane]!} size="md" />
                     <div className="text-xs font-bold mt-1.5 text-center text-slate-200">
-                      {redPicks[selectedMatchupLane]!.nameTh}
+                      {redPicks[selectedMatchupLane]!.name}
                     </div>
                   </div>
                 ) : (

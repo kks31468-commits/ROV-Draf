@@ -1,39 +1,39 @@
 import { Hero, Lane } from '../types/rov';
 
 export const LANE_CONFIG: Record<Lane, { labelTh: string; labelEn: string; icon: string; short: string; color: string }> = {
+  adl: {
+    labelTh: 'แครี่',
+    labelEn: 'Carry',
+    icon: '🏹',
+    short: 'แครี่',
+    color: 'from-sky-600 to-cyan-500',
+  },
+  mid: {
+    labelTh: 'เลนกลาง',
+    labelEn: 'Mid',
+    icon: '🔮',
+    short: 'เลนกลาง',
+    color: 'from-purple-600 to-indigo-500',
+  },
   dsl: {
-    labelTh: 'Dark Slayer (ออฟเลน)',
-    labelEn: 'Dark Slayer Lane',
+    labelTh: 'ออฟ',
+    labelEn: 'Offlane',
     icon: '⚔️',
-    short: 'DSL',
+    short: 'ออฟ',
     color: 'from-amber-600 to-orange-500',
   },
   jg: {
-    labelTh: 'Jungle (ป่า)',
+    labelTh: 'ป่า',
     labelEn: 'Jungle',
     icon: '🌲',
-    short: 'JG',
+    short: 'ป่า',
     color: 'from-emerald-600 to-teal-500',
   },
-  mid: {
-    labelTh: 'Mid Lane (เลนกลาง)',
-    labelEn: 'Mid Lane',
-    icon: '🔮',
-    short: 'MID',
-    color: 'from-purple-600 to-indigo-500',
-  },
-  adl: {
-    labelTh: 'Dragon Lane (แครี่)',
-    labelEn: 'Abyssal Dragon Lane',
-    icon: '🏹',
-    short: 'ADL',
-    color: 'from-sky-600 to-cyan-500',
-  },
   sp: {
-    labelTh: 'Support / Roam (ซัพพอร์ต)',
-    labelEn: 'Support / Roaming',
+    labelTh: 'ซัพ',
+    labelEn: 'Support',
     icon: '🛡️',
-    short: 'SUP',
+    short: 'ซัพ',
     color: 'from-rose-600 to-pink-500',
   },
 };

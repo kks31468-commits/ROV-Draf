@@ -28,9 +28,10 @@ export const HeroPickerGrid: React.FC<HeroPickerGridProps> = ({
 }) => {
   const [search, setSearch] = useState('');
   const [selectedLane, setSelectedLane] = useState<Lane | 'all'>(targetLane || 'all');
-  const [selectedRole, setSelectedRole] = useState<Role | 'all'>('all');
-  const [selectedTier, setSelectedTier] = useState<Tier | 'all'>('all');
   const [showOnlyRecs, setShowOnlyRecs] = useState(false);
+
+  // Ordered lanes as requested: แครี่, เลนกลาง, ออฟ, ป่า, ซัพ
+  const LANE_ORDER: Lane[] = ['adl', 'mid', 'dsl', 'jg', 'sp'];
 
   // Map recommendation scores for quick badge display
   const recMap = useMemo(() => {
@@ -48,13 +49,12 @@ export const HeroPickerGrid: React.FC<HeroPickerGridProps> = ({
 
   const filteredHeroes = useMemo(() => {
     return ALL_HEROES.filter((hero) => {
-      // Search filter
+      // Search filter (English name primary, can also match Thai if user types in Thai)
       const q = search.trim().toLowerCase();
       if (
         q &&
         !hero.name.toLowerCase().includes(q) &&
-        !hero.nameTh.includes(q) &&
-        !hero.role.toLowerCase().includes(q)
+        !hero.nameTh.toLowerCase().includes(q)
       ) {
         return false;
       }
@@ -64,16 +64,6 @@ export const HeroPickerGrid: React.FC<HeroPickerGridProps> = ({
         const matchesLane =
           hero.primaryLane === selectedLane || hero.secondaryLanes?.includes(selectedLane);
         if (!matchesLane) return false;
-      }
-
-      // Role filter
-      if (selectedRole !== 'all' && hero.role !== selectedRole) {
-        return false;
-      }
-
-      // Tier filter
-      if (selectedTier !== 'all' && hero.tier !== selectedTier) {
-        return false;
       }
 
       // Only recommendations filter
@@ -95,7 +85,7 @@ export const HeroPickerGrid: React.FC<HeroPickerGridProps> = ({
       if (diff !== 0) return diff;
       return b.winRate - a.winRate;
     });
-  }, [search, selectedLane, selectedRole, selectedTier, showOnlyRecs, recMap]);
+  }, [search, selectedLane, showOnlyRecs, recMap]);
 
   const handleHeroClick = (hero: Hero, isUnavailable: boolean) => {
     if (isUnavailable) return;
@@ -116,7 +106,7 @@ export const HeroPickerGrid: React.FC<HeroPickerGridProps> = ({
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
           <span className="font-heading font-extrabold text-xs text-white uppercase tracking-wider">
-            แผงเลือกฮีโร่ ({filteredHeroes.length}/{ALL_HEROES.length} ตัว)
+            เลือกฮีโร่ ({filteredHeroes.length} ตัว)
           </span>
         </div>
         <div className="text-xs">
@@ -125,12 +115,12 @@ export const HeroPickerGrid: React.FC<HeroPickerGridProps> = ({
             {activeTeam === 'blue' ? 'ทีมฟ้า' : 'ทีมแดง'}
           </span>
           <span className="text-amber-400 font-bold ml-1">
-            [{activeAction === 'ban' ? '🛡️ แบน' : targetLane ? `⚔️ ${LANE_CONFIG[targetLane].short}` : '⚔️ เลือก'}]
+            [{activeAction === 'ban' ? '🛡️ แบน' : targetLane ? `⚔️ ${LANE_CONFIG[targetLane].labelTh}` : '⚔️ เลือก'}]
           </span>
         </div>
       </div>
 
-      {/* Search & Filter Toolbar */}
+      {/* Search & Simplified Lane Toolbar */}
       <div className="p-2.5 bg-slate-950/70 border-b border-slate-800 space-y-2">
         {/* Search bar & Quick Toggles */}
         <div className="flex items-center gap-2">
@@ -140,7 +130,7 @@ export const HeroPickerGrid: React.FC<HeroPickerGridProps> = ({
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="ค้นหาฮีโร่... (เช่น Stuart, ฟลอ, Aoi)"
+              placeholder="ค้นหาชื่อฮีโร่... (เช่น Stuart, Elsu, Aoi, Florentino)"
               className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all"
             />
             {search && (
@@ -159,7 +149,7 @@ export const HeroPickerGrid: React.FC<HeroPickerGridProps> = ({
               onClick={() => setShowOnlyRecs(!showOnlyRecs)}
               className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap ${
                 showOnlyRecs
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
+                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30 font-bold'
                   : 'bg-slate-800 text-amber-400 border border-amber-500/30 hover:bg-slate-700'
               }`}
             >
@@ -169,19 +159,19 @@ export const HeroPickerGrid: React.FC<HeroPickerGridProps> = ({
           )}
         </div>
 
-        {/* Lanes Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        {/* 5 Standard Lanes Filter Tabs: แครี่ เลนกลาง ออฟ ป่า ซัพ */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-xs">
           <button
             onClick={() => setSelectedLane('all')}
             className={`px-3 py-1.5 rounded-lg font-medium transition-all whitespace-nowrap cursor-pointer ${
               selectedLane === 'all'
-                ? 'bg-slate-100 text-slate-950 font-bold'
+                ? 'bg-slate-100 text-slate-950 font-bold shadow'
                 : 'bg-slate-800/80 text-slate-400 hover:text-slate-200'
             }`}
           >
-            ทุกตำแหน่ง ({ALL_HEROES.length})
+            ทั้งหมด
           </button>
-          {(['dsl', 'jg', 'mid', 'adl', 'sp'] as Lane[]).map((lane) => {
+          {LANE_ORDER.map((lane) => {
             const cfg = LANE_CONFIG[lane];
             const isSelected = selectedLane === lane;
             return (
@@ -191,7 +181,7 @@ export const HeroPickerGrid: React.FC<HeroPickerGridProps> = ({
                 className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
                   isSelected
                     ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold shadow-md shadow-amber-500/20'
-                    : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                    : 'bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800'
                 }`}
               >
                 <span>{cfg.icon}</span>
@@ -199,42 +189,6 @@ export const HeroPickerGrid: React.FC<HeroPickerGridProps> = ({
               </button>
             );
           })}
-        </div>
-
-        {/* Tiers & Roles secondary filters */}
-        <div className="flex items-center gap-2 overflow-x-auto text-[11px] text-slate-400 pt-0.5">
-          <span className="flex items-center gap-1 text-slate-500 font-semibold">
-            <Filter className="w-3 h-3" /> กรองเทียร์:
-          </span>
-          {(['all', 'S+', 'S', 'A+', 'A', 'B', 'C'] as const).map((tier) => (
-            <button
-              key={tier}
-              onClick={() => setSelectedTier(tier)}
-              className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
-                selectedTier === tier
-                  ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40 font-bold'
-                  : 'hover:text-slate-200'
-              }`}
-            >
-              {tier === 'all' ? 'ทุกเทียร์' : `Tier ${tier}`}
-            </button>
-          ))}
-
-          <span className="text-slate-700">|</span>
-          <span className="text-slate-500 font-semibold">สาย:</span>
-          {(['all', 'Warrior', 'Assassin', 'Mage', 'Marksman', 'Tank', 'Support'] as const).map((role) => (
-            <button
-              key={role}
-              onClick={() => setSelectedRole(role)}
-              className={`px-2 py-0.5 rounded cursor-pointer transition-colors ${
-                selectedRole === role
-                  ? 'bg-blue-400/20 text-blue-300 border border-blue-400/40 font-bold'
-                  : 'hover:text-slate-200'
-              }`}
-            >
-              {role === 'all' ? 'ทุกสาย' : role}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -295,12 +249,9 @@ export const HeroPickerGrid: React.FC<HeroPickerGridProps> = ({
                     </button>
                   </div>
 
-                  {/* Hero Name & Info */}
+                  {/* Hero Name (English Only) */}
                   <div className="w-full mt-1.5 px-0.5">
-                    <div className="font-medium text-xs text-slate-200 truncate leading-tight">
-                      {hero.nameTh}
-                    </div>
-                    <div className="text-[10px] text-slate-400 truncate">
+                    <div className="font-heading font-bold text-xs text-slate-100 truncate leading-tight tracking-wide">
                       {hero.name}
                     </div>
                   </div>
