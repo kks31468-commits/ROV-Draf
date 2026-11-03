@@ -1,0 +1,6 @@
+{
+  "name": "RoV Meta Drafter",
+  "description": "เว็บช่วยดราฟท์ฮีโร่ RoV ทุกตำแหน่ง อ้างอิงข้อมูล rovmeta.com วิเคราะห์เคาน์เตอร์พิค คอมโบทีม และเทียร์ลิสต์เมต้าเซิร์ฟไทย",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
