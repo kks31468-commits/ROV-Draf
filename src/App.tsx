@@ -12,6 +12,7 @@ import { CompBuilderView } from './components/CompBuilderView';
 import { DraftSummaryModal } from './components/DraftSummaryModal';
 import { soundManager } from './utils/audio';
 import { LiveRoomManager } from './components/LiveRoomManager';
+import { PWAInstallButton } from './components/PWAInstallButton';
 import {
   Swords,
   Trophy,
@@ -426,6 +427,9 @@ export default function App() {
 
           {/* Quick Actions & Toggles */}
           <div className="flex items-center gap-2">
+            {/* PWA Mobile Install Button */}
+            <PWAInstallButton />
+
             {/* Online Status & Share Website Button */}
             <button
               onClick={handleShareApp}
