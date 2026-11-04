@@ -33,7 +33,32 @@ export const HeroAvatar: React.FC<HeroAvatarProps> = ({
   className = '',
   isBanned = false,
 }) => {
+  const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+    ? import.meta.env.BASE_URL
+    : `${import.meta.env.BASE_URL}/`;
+
+  const heroId = hero.id.toLowerCase();
+  const primaryUrl = hero.avatarUrl || `${baseUrl}heroes/${heroId}.jpg`;
+
+  const [currentSrc, setCurrentSrc] = useState(primaryUrl);
+  const [triedSvg, setTriedSvg] = useState(false);
   const [imgError, setImgError] = useState(false);
+
+  // Sync state if hero changes
+  React.useEffect(() => {
+    setCurrentSrc(hero.avatarUrl || `${baseUrl}heroes/${hero.id.toLowerCase()}.jpg`);
+    setTriedSvg(false);
+    setImgError(false);
+  }, [hero.id, hero.avatarUrl, baseUrl]);
+
+  const handleError = () => {
+    if (!triedSvg) {
+      setTriedSvg(true);
+      setCurrentSrc(`${baseUrl}heroes/${heroId}.svg`);
+    } else {
+      setImgError(true);
+    }
+  };
 
   const sizeClasses = {
     sm: 'w-10 h-10 text-xs',
@@ -44,9 +69,6 @@ export const HeroAvatar: React.FC<HeroAvatarProps> = ({
 
   const tierInfo = TIER_COLORS[hero.tier] || TIER_COLORS['A'];
   const gradient = ROLE_GRADIENTS[hero.role] || 'from-slate-700 to-slate-900';
-
-  // Primary avatar URL format based on rovmeta CDN or fallback to rov.in.th
-  const avatarUrl = `https://brgtaulgngpldsosnhmc.supabase.co/storage/v1/object/public/hero-icons/${hero.slug}.png`;
 
   return (
     <div
@@ -60,12 +82,12 @@ export const HeroAvatar: React.FC<HeroAvatarProps> = ({
     >
       {!imgError ? (
         <img
-          src={hero.avatarUrl || avatarUrl}
+          src={currentSrc}
           alt={hero.name}
           className={`w-full h-full object-cover transition-transform duration-300 ${
             isBanned ? 'grayscale filter brightness-75 contrast-125' : ''
           }`}
-          onError={() => setImgError(true)}
+          onError={handleError}
           loading="lazy"
         />
       ) : (

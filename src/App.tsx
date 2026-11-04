@@ -11,6 +11,7 @@ import { MetaTierListView } from './components/MetaTierListView';
 import { CompBuilderView } from './components/CompBuilderView';
 import { DraftSummaryModal } from './components/DraftSummaryModal';
 import { soundManager } from './utils/audio';
+import { LiveRoomManager } from './components/LiveRoomManager';
 import {
   Swords,
   Trophy,
@@ -25,9 +26,11 @@ import {
   Globe,
   Check,
   Link,
+  Smartphone,
+  Tv,
 } from 'lucide-react';
 
-type NavTab = 'draft' | 'counters' | 'tierlist' | 'builder';
+type NavTab = 'draft' | 'counters' | 'tierlist' | 'builder' | 'live-room';
 
 export default function App() {
   const [navTab, setNavTab] = useState<NavTab>('draft');
@@ -62,6 +65,14 @@ export default function App() {
 
   const [inspectedHero, setInspectedHero] = useState<Hero | null>(null);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+
+  // Auto-switch to live-room tab if room query parameter or tab=live is detected
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('room') || params.get('tab') === 'live') {
+      setNavTab('live-room');
+    }
+  }, []);
 
   // Toggle audio
   const toggleSound = () => {
@@ -392,6 +403,25 @@ export default function App() {
               <Layers className="w-3.5 h-3.5" />
               <span>จัดทีม 5 คน</span>
             </button>
+
+            <button
+              onClick={() => {
+                soundManager.playClick();
+                setNavTab('live-room');
+              }}
+              className={`px-3 py-1.5 rounded-lg font-heading font-bold transition-all flex items-center gap-1.5 cursor-pointer relative ${
+                navTab === 'live-room'
+                  ? 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/30'
+                  : 'text-sky-300 hover:text-white bg-sky-950/40 border border-sky-500/40 hover:bg-sky-900/50'
+              }`}
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-400"></span>
+              </span>
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>แชร์จอ & แท็บเล็ต AI</span>
+            </button>
           </nav>
 
           {/* Quick Actions & Toggles */}
@@ -595,6 +625,55 @@ export default function App() {
             onLoadIntoDraft={handleLoadSquadIntoDraft}
             onInspectHero={(h) => setInspectedHero(h)}
           />
+        )}
+
+        {/* TAB 5: DUAL-DEVICE LIVE SCREEN & TABLET AI COACH */}
+        {navTab === 'live-room' && (
+          <div className="p-4 sm:p-6 max-w-7xl mx-auto w-full">
+            <LiveRoomManager
+              onSelectHeroDetail={(h) => setInspectedHero(h)}
+              draftState={{
+                blueBans,
+                redBans,
+                bluePicks,
+                redPicks,
+                activeTeam,
+                activeAction,
+              }}
+              onUpdateDraftState={(syncedState) => {
+                if (syncedState.blueBans) {
+                  const resolvedBlueBans = syncedState.blueBans.map((item: any) =>
+                    typeof item === 'string' ? getHeroById(item) || null : item
+                  );
+                  setBlueBans(resolvedBlueBans);
+                }
+                if (syncedState.redBans) {
+                  const resolvedRedBans = syncedState.redBans.map((item: any) =>
+                    typeof item === 'string' ? getHeroById(item) || null : item
+                  );
+                  setRedBans(resolvedRedBans);
+                }
+                if (syncedState.bluePicks) {
+                  const newBP: Record<Lane, Hero | null> = { ...bluePicks };
+                  for (const [lane, val] of Object.entries(syncedState.bluePicks)) {
+                    newBP[lane as Lane] =
+                      typeof val === 'string' ? getHeroById(val) || null : (val as Hero | null);
+                  }
+                  setBluePicks(newBP);
+                }
+                if (syncedState.redPicks) {
+                  const newRP: Record<Lane, Hero | null> = { ...redPicks };
+                  for (const [lane, val] of Object.entries(syncedState.redPicks)) {
+                    newRP[lane as Lane] =
+                      typeof val === 'string' ? getHeroById(val) || null : (val as Hero | null);
+                  }
+                  setRedPicks(newRP);
+                }
+                if (syncedState.activeTeam) setActiveTeam(syncedState.activeTeam);
+                if (syncedState.activeAction) setActiveAction(syncedState.activeAction);
+              }}
+            />
+          </div>
         )}
       </main>
 
