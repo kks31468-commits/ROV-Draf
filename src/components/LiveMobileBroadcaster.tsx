@@ -20,6 +20,10 @@ import {
   Swords,
   ShieldAlert,
   Zap,
+  HelpCircle,
+  ExternalLink,
+  X,
+  Compass,
 } from 'lucide-react';
 import { realtimeClient, DraftSyncPayload } from '../utils/realtimeClient';
 import { Hero, Lane } from '../types/rov';
@@ -55,6 +59,13 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
   const [frameCount, setFrameCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasDisplayMedia, setHasDisplayMedia] = useState(true);
+  const [showGuideModal, setShowGuideModal] = useState(false);
+  const [copiedFlagUrl, setCopiedFlagUrl] = useState(false);
+
+  // Environment checks
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   // Quick Draft selector on mobile
   const [quickSearch, setQuickSearch] = useState('');
@@ -67,11 +78,23 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
   const captureIntervalRef = useRef<any>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Detect getDisplayMedia support
+  // Detect environment and getDisplayMedia support
   useEffect(() => {
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const inApp = /Line|FBAN|FBAV|Instagram|MicroMessenger|musical_ly|BytedanceWebview/i.test(ua);
+    const android = /Android/i.test(ua);
+    const ios = /iPhone|iPad|iPod/i.test(ua);
+
+    setIsInAppBrowser(inApp);
+    setIsAndroid(android);
+    setIsIOS(ios);
+
     const isSupported =
       typeof navigator !== 'undefined' &&
-      !!(navigator.mediaDevices && typeof navigator.mediaDevices.getDisplayMedia === 'function');
+      !!(
+        (navigator.mediaDevices && typeof navigator.mediaDevices.getDisplayMedia === 'function') ||
+        (navigator as any).getDisplayMedia
+      );
     setHasDisplayMedia(isSupported);
   }, []);
 
@@ -123,31 +146,46 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const copyFlagText = () => {
+    navigator.clipboard.writeText('chrome://flags');
+    setCopiedFlagUrl(true);
+    setTimeout(() => setCopiedFlagUrl(false), 2000);
+  };
+
   // Start Screen Sharing with multiple fallbacks
   const startScreenShare = async () => {
     setErrorMessage(null);
+
+    // If inside LINE or Facebook in-app browser, direct user to open in Chrome/Safari
+    if (isInAppBrowser) {
+      setErrorMessage(
+        '⚠️ คุณกำลังเปิดในแอป LINE หรือ Facebook ซึ่งระบบแอปจะบล็อกการแชร์จอ กรุณากดปุ่ม 3 จุด (⋯) แล้วเลือก "เปิดใน Chrome" หรือ "เปิดใน Safari" เพื่อแชร์หน้าจอครับ'
+      );
+      setShowGuideModal(true);
+      return;
+    }
+
+    const nav = navigator as any;
+    const getDisplay =
+      navigator.mediaDevices?.getDisplayMedia?.bind(navigator.mediaDevices) ||
+      nav.getDisplayMedia?.bind(nav);
+
+    if (!getDisplay) {
+      setShowGuideModal(true);
+      return;
+    }
+
     try {
-      const nav = navigator as any;
-      const getDisplay =
-        navigator.mediaDevices?.getDisplayMedia?.bind(navigator.mediaDevices) ||
-        nav.getDisplayMedia?.bind(nav);
-
-      if (!getDisplay) {
-        throw new Error(
-          'มือถือระบบนี้ไม่อนุญาตให้เว็บแชร์หน้าจอของแอปเกม RoV ทางออกที่ดีที่สุดคือใช้ปุ่ม "เปิดกล้องส่องจอ" หรือ "แคปรูปหน้าจอส่ง" ด้านล่างครับ'
-        );
-      }
-
       let mediaStream: MediaStream | null = null;
       try {
         mediaStream = await getDisplay({
           video: true,
-          audio: false,
         });
       } catch (err1) {
-        // Retry with relaxed constraints
+        // Retry with basic constraints
         mediaStream = await getDisplay({
-          video: { frameRate: { ideal: 5, max: 10 } },
+          video: { frameRate: { ideal: 5, max: 15 } },
+          audio: false,
         });
       }
 
@@ -173,10 +211,14 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
         };
       }
     } catch (err: any) {
+      if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
+        // User cancelled the prompt, no need to show scary error
+        return;
+      }
       console.warn('Screen share failed:', err);
+      setShowGuideModal(true);
       setErrorMessage(
-        err.message ||
-          'ระบบของมือถือไม่อนุญาตให้เบราว์เซอร์แชร์หน้าจอแอปเกม แนะนำให้ใช้ปุ่ม "เปิดกล้องส่องจอ" หรือ "อัปโหลดภาพแคปหน้าจอ" แทนครับ'
+        'ไม่สามารถเริ่มแชร์หน้าจอได้ในขณะนี้: แนะนำให้เปิดการแชร์จอบน Chrome ตามคำแนะนำด้านล่าง หรือใช้ปุ่มเปิดกล้องส่องจอ'
       );
     }
   };
@@ -393,7 +435,6 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
         realtimeClient.sendDraftUpdate(updated as any);
       }
     } else {
-      // Pick for specific lane
       if (quickTeam === 'blue') {
         const nextPicks = { ...draftState.bluePicks, [quickLane]: hero };
         const updated = { ...draftState, bluePicks: nextPicks };
@@ -423,6 +464,26 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
     <div className="max-w-4xl mx-auto space-y-5">
       {/* Hidden Video element for video capture */}
       <video ref={videoRef} playsInline muted autoPlay className="hidden" />
+
+      {/* In-App Browser Warning Banner */}
+      {isInAppBrowser && (
+        <div className="bg-amber-950/80 border border-amber-600 rounded-2xl p-4 text-amber-200 text-xs shadow-xl flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <strong className="text-white text-sm">
+              คุณกำลังเปิดเว็บผ่านแอป LINE หรือ Facebook
+            </strong>
+            <p className="text-slate-300 leading-relaxed">
+              แอปเหล่านี้จะ<strong>บล็อกไม่ให้แชร์หน้าจอ</strong>เป็นค่าความปลอดภัยของแอป
+              กรุณากดที่<strong>ปุ่ม 3 จุด (⋯)</strong> ที่มุมบนขวา แล้วเลือก{' '}
+              <strong className="text-amber-300">
+                "เปิดด้วยเบราว์เซอร์ภายนอก" (Open in Chrome / Safari)
+              </strong>{' '}
+              เพื่อเปิดระบบแชร์จอได้เต็มประสิทธิภาพครับ
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-sky-950 via-slate-900 to-indigo-950 border border-sky-800/50 rounded-2xl p-4 sm:p-5 shadow-xl">
@@ -507,14 +568,18 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
         {/* Broadcasting Options & Controls (7 cols) */}
         <div className="md:col-span-7 bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-1">
-              <Video className="w-4 h-4 text-sky-400" />
-              เลือกวิธีส่งภาพหน้าจอ RoV ไปยังแท็บเล็ต
-            </h3>
-
-            {/* Why mobile restricts direct screen recording */}
-            <div className="mb-3 p-2.5 bg-sky-950/40 border border-sky-800/40 rounded-xl text-xs text-sky-200">
-              <span className="font-semibold text-sky-300">💡 คำแนะนำสำหรับผู้เล่นมือถือ:</span> บนระบบ iOS และ Android เบราว์เซอร์จะจำกัดการอัดหน้าจอของแอปอื่นเพื่อความปลอดภัย คุณสามารถเลือกวิธีที่สะดวกที่สุดได้ทันที:
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Video className="w-4 h-4 text-sky-400" />
+                การแชร์หน้าจอเกม RoV ไปยังแท็บเล็ต
+              </h3>
+              <button
+                onClick={() => setShowGuideModal(true)}
+                className="text-[11px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>วิธีเปิดแชร์จอบนมือถือ</span>
+              </button>
             </div>
 
             {errorMessage && (
@@ -524,51 +589,75 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
               </div>
             )}
 
-            {/* The 4 Transmission Methods */}
+            {/* Broadcast Options */}
             <div className="space-y-2.5">
-              {/* Method 1: Camera Stream (Most reliable on all phones) */}
+              {/* Button 1: Screen Share */}
               <button
-                onClick={isStreaming && streamMode === 'camera' ? stopStreaming : startCameraStream}
-                className={`w-full py-3 px-3.5 rounded-xl font-bold flex items-center justify-between text-xs transition-all shadow-md ${
-                  isStreaming && streamMode === 'camera'
+                onClick={isStreaming && streamMode === 'screen' ? stopStreaming : startScreenShare}
+                className={`w-full py-3.5 px-4 rounded-xl font-bold flex items-center justify-between text-sm transition-all shadow-lg ${
+                  isStreaming && streamMode === 'screen'
                     ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-900/30'
-                    : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-900/30'
+                    : 'bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white shadow-sky-900/30'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 bg-white/20 rounded-lg">
-                    {isStreaming && streamMode === 'camera' ? (
-                      <Pause className="w-4 h-4" />
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg">
+                    {isStreaming && streamMode === 'screen' ? (
+                      <Pause className="w-5 h-5" />
                     ) : (
-                      <Camera className="w-4 h-4" />
+                      <Video className="w-5 h-5" />
                     )}
                   </div>
                   <div className="text-left">
-                    <div className="text-sm">
-                      {isStreaming && streamMode === 'camera'
-                        ? 'ปิดกล้อง (Stop Camera)'
-                        : '📸 เปิดกล้องส่องหน้าจอเกม (แนะนำสำหรับมือถือ)'}
+                    <div>
+                      {isStreaming && streamMode === 'screen'
+                        ? 'หยุดแชร์หน้าจอ (Stop Screen)'
+                        : '🎥 เริ่มแชร์หน้าจอมือถือ (Direct Screen Share)'}
                     </div>
                     <div className="text-[10px] font-normal opacity-90">
-                      ใช้กล้องมือถือส่องไปที่หน้าจอเล่นเกม ภาพจะขึ้นแท็บเล็ตสดทันที
+                      แชร์หน้าจอทั้งเครื่องรวมถึงเกม RoV ไปยังแท็บเล็ต
                     </div>
                   </div>
                 </div>
-                {isStreaming && streamMode === 'camera' ? (
+                {isStreaming && streamMode === 'screen' ? (
                   <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
                 ) : (
                   <ArrowRight className="w-4 h-4" />
                 )}
               </button>
 
-              {/* Method 2: Snap Screenshot Upload */}
+              {/* Button 2: Camera Stream (Guaranteed fallback) */}
+              <button
+                onClick={isStreaming && streamMode === 'camera' ? stopStreaming : startCameraStream}
+                className={`w-full py-2.5 px-3 rounded-xl font-bold flex items-center justify-between text-xs transition-all border ${
+                  isStreaming && streamMode === 'camera'
+                    ? 'bg-rose-600/20 border-rose-500 text-rose-300'
+                    : 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-500/40 text-emerald-300'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Camera className="w-4 h-4 text-emerald-400" />
+                  <div className="text-left">
+                    <div>
+                      {isStreaming && streamMode === 'camera'
+                        ? 'ปิดกล้อง (Stop Camera)'
+                        : '📸 เปิดกล้องส่องหน้าจอเกม (ใช้ได้ 100% ทุกมือถือ)'}
+                    </div>
+                    <div className="text-[10px] font-normal text-emerald-400/80">
+                      ส่องกล้องไปที่หน้าจอเล่นเกม RoV ส่งภาพสดไปแท็บเล็ตทันที
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              {/* Button 3: Snapshot upload */}
               <label className="w-full py-2.5 px-3 rounded-xl text-xs font-semibold bg-slate-950/80 hover:bg-slate-800 border border-dashed border-sky-500/50 text-sky-300 flex items-center justify-between cursor-pointer transition-colors">
                 <div className="flex items-center gap-2">
                   <Upload className="w-4 h-4 text-sky-400" />
                   <div className="text-left">
                     <div>แคปรูปดราฟท์ใน RoV แล้วส่งเข้าแท็บเล็ต (Snap Photo)</div>
                     <div className="text-[10px] text-slate-400 font-normal">
-                      แคปหน้าจอดราฟท์ แล้วแตะที่นี่เพื่อส่งภาพให้แท็บเล็ตสแกนทันที
+                      แคปหน้าจอดราฟท์ แล้วแตะที่นี่เพื่อส่งภาพให้แท็บเล็ตสแกน
                     </div>
                   </div>
                 </div>
@@ -583,28 +672,7 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
                 </span>
               </label>
 
-              {/* Method 3: Direct getDisplayMedia if available */}
-              {hasDisplayMedia && (
-                <button
-                  onClick={isStreaming && streamMode === 'screen' ? stopStreaming : startScreenShare}
-                  className={`w-full py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-between transition-all border ${
-                    isStreaming && streamMode === 'screen'
-                      ? 'bg-rose-600/20 border-rose-500 text-rose-300'
-                      : 'bg-slate-950/60 hover:bg-slate-800 border-slate-700 text-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Video className="w-4 h-4 text-sky-400" />
-                    <span>
-                      {isStreaming && streamMode === 'screen'
-                        ? 'หยุดแชร์หน้าจอ'
-                        : '🎥 แชร์หน้าจอมือถือโดยตรง (Direct Screen Share)'}
-                    </span>
-                  </div>
-                </button>
-              )}
-
-              {/* Method 4: Demo Stream */}
+              {/* Button 4: Demo */}
               <button
                 onClick={isStreaming && streamMode === 'demo' ? stopStreaming : startDemoStream}
                 className={`w-full py-2 px-3 rounded-xl text-xs font-medium flex items-center justify-between transition-all border ${
@@ -663,7 +731,6 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
 
           {/* Quick Selectors */}
           <div className="flex items-center gap-2">
-            {/* Team Toggle */}
             <div className="flex rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-xs font-bold">
               <button
                 onClick={() => setQuickTeam('blue')}
@@ -683,7 +750,6 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
               </button>
             </div>
 
-            {/* Action Toggle */}
             <div className="flex rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-xs font-bold">
               <button
                 onClick={() => setQuickAction('pick')}
@@ -705,7 +771,6 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Lane Selector if Pick */}
         {quickAction === 'pick' && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
             <span className="text-[11px] text-slate-400 shrink-0 font-medium">ตำแหน่ง:</span>
@@ -725,7 +790,6 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
           </div>
         )}
 
-        {/* Search Input */}
         <div className="relative">
           <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
           <input
@@ -737,7 +801,6 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
           />
         </div>
 
-        {/* Hero Quick Tap Grid */}
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-56 overflow-y-auto pr-1">
           {filteredHeroes.slice(0, 32).map((hero) => (
             <button
@@ -753,6 +816,96 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
           ))}
         </div>
       </div>
+
+      {/* Screen Share Activation Guide Modal */}
+      {showGuideModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-sky-500/50 rounded-2xl p-6 max-w-lg w-full shadow-2xl relative text-slate-200 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowGuideModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-800"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-sky-500/20 rounded-xl text-sky-400">
+                <Compass className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-white text-base">วิธีเปิดระบบแชร์หน้าจอบนมือถือ</h3>
+                <p className="text-xs text-sky-400">ทำตามขั้นตอนนี้เพื่อแชร์จอเกม RoV ได้ทันที</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* Android Section */}
+              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-emerald-400 text-sm">
+                  <span>🤖 สำหรับมือถือ Android (Google Chrome)</span>
+                </div>
+                <p className="text-slate-300">
+                  Google Chrome บน Android มีระบบแชร์หน้าจอทั้งเครื่อง แต่ต้องเปิดใช้งานครั้งเดียวตามขั้นตอนนี้ครับ:
+                </p>
+                <div className="space-y-2 pl-2 border-l-2 border-emerald-500/40 text-slate-300">
+                  <div className="flex items-center justify-between bg-slate-900 p-2 rounded-lg">
+                    <span className="font-mono text-emerald-300">chrome://flags</span>
+                    <button
+                      onClick={copyFlagText}
+                      className="px-2 py-1 bg-emerald-600/30 text-emerald-300 rounded font-semibold text-[10px]"
+                    >
+                      {copiedFlagUrl ? 'คัดลอกแล้ว!' : 'คัดลอก'}
+                    </button>
+                  </div>
+                  <div>
+                    <strong>1.</strong> เปิดแท็บใหม่ใน Chrome แล้ววางคำว่า{' '}
+                    <code className="text-emerald-300 font-mono">chrome://flags</code>
+                  </div>
+                  <div>
+                    <strong>2.</strong> ในช่องค้นหา พิมพ์:{' '}
+                    <code className="text-sky-300 font-mono">web platform</code>
+                  </div>
+                  <div>
+                    <strong>3.</strong> ตรงหัวข้อ{' '}
+                    <strong>"Experimental Web Platform features"</strong> ให้กดเปลี่ยนเป็น{' '}
+                    <strong className="text-emerald-400">Enabled</strong>
+                  </div>
+                  <div>
+                    <strong>4.</strong> กดปุ่ม <strong>"Relaunch"</strong> ที่มุมขวาล่าง
+                  </div>
+                </div>
+                <p className="text-emerald-300/90 text-[11px] font-semibold pt-1">
+                  ✅ พอกลับมาที่หน้านี้ จะสามารถกดปุ่ม "เริ่มแชร์หน้าจอมือถือ" ได้ทันที!
+                </p>
+              </div>
+
+              {/* iPhone / iOS Section */}
+              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-sky-400 text-sm">
+                  <span>🍏 สำหรับ iPhone / iPad (Safari)</span>
+                </div>
+                <p className="text-slate-300 leading-relaxed">
+                  ต้องเปิดผ่านแอป <strong>Safari ตัวจริง</strong> (iOS 16.5 ขึ้นไป) เท่านั้น
+                  หากเปิดจากแอป LINE หรือ Facebook ระบบ iOS จะไม่อนุญาตให้แชร์จอ
+                </p>
+                <div className="text-[11px] text-amber-300 bg-amber-950/40 p-2 rounded-lg border border-amber-800/40">
+                  💡 <strong>ข้อควรรู้ของ iOS:</strong> เมื่อสลับหน้าจอไปที่เกม RoV ระบบ iOS
+                  อาจพักการทำงานของเบราว์เซอร์ชั่วคราว แนะนำให้ใช้ตัวเลือก{' '}
+                  <strong>"เปิดกล้องส่องจอ"</strong> หรือ <strong>"แป้นกดดราฟท์ด่วน"</strong>{' '}
+                  เพื่อความลื่นไหลที่สุดครับ
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowGuideModal(false)}
+              className="mt-5 w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 font-bold text-xs text-white transition-colors"
+            >
+              เข้าใจแล้ว ปิดหน้าต่างนี้
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
