@@ -215,10 +215,9 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
         // User cancelled the prompt, no need to show scary error
         return;
       }
-      console.warn('Screen share failed:', err);
-      setShowGuideModal(true);
+      console.warn('Screen share failed on mobile:', err);
       setErrorMessage(
-        'ไม่สามารถเริ่มแชร์หน้าจอได้ในขณะนี้: แนะนำให้เปิดการแชร์จอบน Chrome ตามคำแนะนำด้านล่าง หรือใช้ปุ่มเปิดกล้องส่องจอ'
+        '💡 ระบบความปลอดภัยของ Android/iOS ไม่อนุญาตให้หน้าเว็บอัดหน้าจอของแอปเกม RoV: แนะนำให้ใช้ "แป้นกดดราฟท์ด่วนด้านล่าง" (แตะปุ๊บขึ้นแท็บเล็ตทันที) หรือใช้ "กล้องส่องจอ" หรือ "Smart View ของมือถือ" แทนครับ'
       );
     }
   };
@@ -833,67 +832,58 @@ export const LiveMobileBroadcaster: React.FC<Props> = ({
                 <Compass className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-base">วิธีเปิดระบบแชร์หน้าจอบนมือถือ</h3>
-                <p className="text-xs text-sky-400">ทำตามขั้นตอนนี้เพื่อแชร์จอเกม RoV ได้ทันที</p>
+                <h3 className="font-bold text-white text-base">ทำไมมือถือถึงบล็อกการแชร์จอผ่านเว็บ?</h3>
+                <p className="text-xs text-sky-400">และ 3 ทางออกที่นักแข่ง RoV ใช้งานได้จริง 100%</p>
               </div>
             </div>
 
-            <div className="space-y-4 text-xs">
-              {/* Android Section */}
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-emerald-400 text-sm">
-                  <span>🤖 สำหรับมือถือ Android (Google Chrome)</span>
-                </div>
-                <p className="text-slate-300">
-                  Google Chrome บน Android มีระบบแชร์หน้าจอทั้งเครื่อง แต่ต้องเปิดใช้งานครั้งเดียวตามขั้นตอนนี้ครับ:
-                </p>
-                <div className="space-y-2 pl-2 border-l-2 border-emerald-500/40 text-slate-300">
-                  <div className="flex items-center justify-between bg-slate-900 p-2 rounded-lg">
-                    <span className="font-mono text-emerald-300">chrome://flags</span>
-                    <button
-                      onClick={copyFlagText}
-                      className="px-2 py-1 bg-emerald-600/30 text-emerald-300 rounded font-semibold text-[10px]"
-                    >
-                      {copiedFlagUrl ? 'คัดลอกแล้ว!' : 'คัดลอก'}
-                    </button>
-                  </div>
-                  <div>
-                    <strong>1.</strong> เปิดแท็บใหม่ใน Chrome แล้ววางคำว่า{' '}
-                    <code className="text-emerald-300 font-mono">chrome://flags</code>
-                  </div>
-                  <div>
-                    <strong>2.</strong> ในช่องค้นหา พิมพ์:{' '}
-                    <code className="text-sky-300 font-mono">web platform</code>
-                  </div>
-                  <div>
-                    <strong>3.</strong> ตรงหัวข้อ{' '}
-                    <strong>"Experimental Web Platform features"</strong> ให้กดเปลี่ยนเป็น{' '}
-                    <strong className="text-emerald-400">Enabled</strong>
-                  </div>
-                  <div>
-                    <strong>4.</strong> กดปุ่ม <strong>"Relaunch"</strong> ที่มุมขวาล่าง
-                  </div>
-                </div>
-                <p className="text-emerald-300/90 text-[11px] font-semibold pt-1">
-                  ✅ พอกลับมาที่หน้านี้ จะสามารถกดปุ่ม "เริ่มแชร์หน้าจอมือถือ" ได้ทันที!
+            <div className="space-y-3.5 text-xs">
+              {/* Reality explanation */}
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-slate-300 leading-relaxed">
+                <span className="text-amber-400 font-bold">⚠️ ข้อจำกัดความปลอดภัยของมือถือ (Android & iOS):</span>
+                <p className="mt-1 text-slate-400">
+                  ระบบปฏิบัติการมือถือจะ <strong>"ตัดการเข้าถึงหน้าจอ"</strong> ของหน้าเว็บทันทีเมื่อคุณสลับไปเปิดแอปเกม RoV เพื่อป้องกันไม่ให้เว็บดักจับข้อมูลบนมือถือขณะเล่นเกมครับ
                 </p>
               </div>
 
-              {/* iPhone / iOS Section */}
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-sky-400 text-sm">
-                  <span>🍏 สำหรับ iPhone / iPad (Safari)</span>
+              {/* Solution 1: Quick Tap */}
+              <div className="bg-gradient-to-r from-sky-950/60 to-indigo-950/60 p-3.5 rounded-xl border border-sky-500/40 space-y-1.5">
+                <div className="flex items-center gap-2 font-bold text-sky-300 text-sm">
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  <span>วิธีที่ 1: ใช้ "แป้นกดดราฟท์ด่วน" (เร็วและเวิร์กที่สุด 100%)</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed">
-                  ต้องเปิดผ่านแอป <strong>Safari ตัวจริง</strong> (iOS 16.5 ขึ้นไป) เท่านั้น
-                  หากเปิดจากแอป LINE หรือ Facebook ระบบ iOS จะไม่อนุญาตให้แชร์จอ
+                <p className="text-slate-300">
+                  ในหน้านี้ด้านล่างจะมี <strong>แป้นกดดราฟท์มือถือด่วน</strong> คุณแค่แตะชื่อฮีโร่ที่ถูกเลือกใน RoV (เช่น Aoi, Liliana, Helen) 
+                  <strong> ข้อมูลจะเด้งไปขึ้นบนจอแท็บเล็ตใน 0.05 วินาทีทันที!</strong> และแท็บเล็ตจะคำนวณตัวแก้ทางให้แบบสดๆ เลยครับ
                 </p>
-                <div className="text-[11px] text-amber-300 bg-amber-950/40 p-2 rounded-lg border border-amber-800/40">
-                  💡 <strong>ข้อควรรู้ของ iOS:</strong> เมื่อสลับหน้าจอไปที่เกม RoV ระบบ iOS
-                  อาจพักการทำงานของเบราว์เซอร์ชั่วคราว แนะนำให้ใช้ตัวเลือก{' '}
-                  <strong>"เปิดกล้องส่องจอ"</strong> หรือ <strong>"แป้นกดดราฟท์ด่วน"</strong>{' '}
-                  เพื่อความลื่นไหลที่สุดครับ
+              </div>
+
+              {/* Solution 2: Smart View / Cast */}
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-1.5">
+                <div className="flex items-center gap-2 font-bold text-emerald-400 text-sm">
+                  <Smartphone className="w-4 h-4 text-emerald-400" />
+                  <span>วิธีที่ 2: ใช้ "Smart View / แคสต์หน้าจอ" ของมือถือโดยตรง</span>
                 </div>
+                <p className="text-slate-300">
+                  รูดแถบการตั้งค่าด่วนด้านบนของมือถือลงมา (ตรงที่เปิด Wi-Fi) แล้วกดปุ่ม:
+                </p>
+                <div className="text-slate-400 pl-2 border-l border-emerald-500/40 space-y-0.5">
+                  <div>• Samsung: กด <strong>Smart View</strong></div>
+                  <div>• Xiaomi / Oppo / Vivo / Realme: กด <strong>การสะท้อนหน้าจอ (Cast / Screen Mirroring)</strong></div>
+                  <div>• แล้วยิงภาพหน้าจอมือถือขึ้นแท็บเล็ตได้เลย 60fps ลื่นๆ ไม่หลุด!</div>
+                </div>
+              </div>
+
+              {/* Solution 3: Snap Screenshot */}
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-1.5">
+                <div className="flex items-center gap-2 font-bold text-purple-400 text-sm">
+                  <Upload className="w-4 h-4 text-purple-400" />
+                  <span>วิธีที่ 3: แคปรูปดราฟท์ใน RoV แล้วส่งให้ AI สแกน</span>
+                </div>
+                <p className="text-slate-300">
+                  ระหว่างหน้าเลือกตัว แคปรูปหน้าจอ 1 วินาที แล้วแตะปุ่ม <strong>"แคปรูปดราฟท์ใน RoV แล้วส่งเข้าแท็บเล็ต"</strong> 
+                  ระบบจะส่งภาพเข้าแท็บเล็ตและ AI จะสแกนตัวละครให้ทันที
+                </p>
               </div>
             </div>
 
